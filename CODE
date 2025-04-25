@@ -1,0 +1,89 @@
+import requests
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+# API setup
+API_KEY = "my-api-key"  
+BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+FORECAST_URL = "http://api.openweathermap.org/data/2.5/forecast"
+
+# Function to fetch current weather data
+def get_current_weather(city):
+   
+    url = f"{BASE_URL}?q={city}&appid={API_KEY}&units=metric"
+    print("Requesting current weather URL:", url)
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        main = data['main']
+        wind = data['wind']
+        weather = data['weather'][0]
+
+        # Display current weather information
+        print(f"City: {city}")
+        print(f"Temperature: {main['temp']}°C")
+        print(f"Weather: {weather['description'].capitalize()}")
+        print(f"Humidity: {main['humidity']}%")
+        print(f"Wind Speed: {wind['speed']} m/s")
+        return data
+    else:
+        print(f"{city} named city does not exist , please check again")
+        print(f"Error: Request failed with status code {response.status_code}")
+        return None
+
+# Function to fetch and display 5-day forecast data with visualization
+def get_weather_forecast_data(city):
+   
+    url = f"{FORECAST_URL}?q={city}&appid={API_KEY}&units=metric"
+    print("Requesting forecast URL:", url)
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        forecast_data = data["list"]
+
+        # Prepare data for visualization
+        dates = []
+        temps = []
+
+        print("\n5-day forecast:")
+
+        for entry in forecast_data:
+            dt_txt = entry["dt_txt"]
+            temp = entry["main"]["temp"]
+            weather_description = entry["weather"][0]["description"].capitalize()
+
+            # Print the forecast data in text format
+            print(f"{dt_txt} - Temp: {temp}°C, Weather: {weather_description}")
+
+            # Collect data for plotting
+            dates.append(datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S"))
+            temps.append(temp)
+
+        # Plotting the forecast data
+        plt.figure(figsize=(10, 6))
+        plt.plot(dates, temps, marker='o', color='b', linestyle='-')
+        plt.title(f"5-Day Temperature Forecast for {city.capitalize()}")
+        plt.xlabel("Date and Time")
+        plt.ylabel("Temperature (°C)")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.grid(True)
+        plt.show()
+
+    else:
+        print(f"Error: Forecast request failed with status code {response.status_code}")
+
+# Main function to fetch and display weather data and forecast visualization
+def get_weather_forecast_for_city(city):
+    # Get current weather 
+    get_current_weather(city)
+
+    # Get forecast and visualize it
+    get_weather_forecast_data(city)
+
+# Main 
+if __name__ == "__main__":
+    city = input("Enter the city name (e.g., Toronto,CA or London,GB): ")
+    get_weather_forecast_for_city(city)
